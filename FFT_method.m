@@ -4,6 +4,11 @@ T = 1/fs;
 M = csvread('singleWindowData_45d_50khzFs.csv');
 
 stem(M(:,1))
+M(:,1) = M(:,1)/max(M(:,1));
+M(:,2) = M(:,2)/max(M(:,2));
+M(:,3) = M(:,3)/max(M(:,3));
+M(:,4) = M(:,4)/max(M(:,4));
+
 
 channelA_FFT=fft(M(:,1));
 channelB_FFT = fft(M(:,2));
@@ -16,10 +21,10 @@ phaseDiff_A_D = phase(channelA_FFT)-phase(channelD_FFT);
 
 figure(1)
 subplot(2,1,2)
-stem(phase(channelA_FFT))
+stem(phase(channelC_FFT))
 ylabel('phase')
 subplot(2,1,1)
-stem(abs(channelA_FFT))
+stem(abs(channelC_FFT))
 ylabel('mag')
 
 figure(2)
