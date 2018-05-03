@@ -8,7 +8,7 @@ function [ distance, theta ] = CosFunction2( channelA, channelB, channelC, chann
 %%using channel 2 as the source of theta, and vector (2-1) as 0 degrees.
 
 distanceMic = 0.05;
-freq = 50000000; 
+freq = 93300; 
 SecondMicNumber = channelCnumber;    
 LongerMicDistance = distanceMic*(SecondMicNumber-1);
 
@@ -19,12 +19,20 @@ channelC2 = channelC - min(channelC);
 corr = xcorr(channelA2, channelB2); %xcoor must be translated into C++
 corr2 = xcorr(channelA2, channelC2);
 
+figure(1)
+stem(corr)
+
+figure(2)
+stem(corr2)
+
+
 [m,n] = max(corr);
 [o,p] = max(corr2);
 
 %Midway point is at 254.5 or ~255
-delta = abs(n - 255);
-delta2 = abs(p - 255);
+delta = abs(n - 255)
+delta2 = abs(p - 255)
+
 
 %Rounded to full integers, notice how far from 20m the final distance
 %diverges
