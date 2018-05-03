@@ -1,0 +1,8 @@
+fs = 500000;
+T = 1/fs;
+
+M = csvread('singleWindowData_45d_50khzFs.csv');
+
+stem(M(:,1))
+
+fft

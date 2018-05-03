@@ -20,7 +20,7 @@ void setup()
               TC_CMR_ACPA_CLEAR | TC_CMR_ACPC_CLEAR |
               TC_CMR_BCPB_CLEAR | TC_CMR_BCPC_CLEAR ;
   
-  t->TC_RC =  450 ;     // counter resets on RC, so sets period in terms of 42MHz clock
+  t->TC_RC =  2625;     // counter resets on RC, so sets period in terms of 42MHz clock
   t->TC_RA =  440 ;     // roughly square wave
   t->TC_CMR = (t->TC_CMR & 0xFFF0FFFF) | TC_CMR_ACPA_CLEAR | TC_CMR_ACPC_SET ;  // set clear and set from RA and RC compares
   
