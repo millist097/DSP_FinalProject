@@ -20,7 +20,7 @@ void setup()
               TC_CMR_ACPA_CLEAR | TC_CMR_ACPC_CLEAR |
               TC_CMR_BCPB_CLEAR | TC_CMR_BCPC_CLEAR ;
   
-  t->TC_RC =  840 ;     // counter resets on RC, so sets period in terms of 42MHz clock
+  t->TC_RC =  450 ;     // counter resets on RC, so sets period in terms of 42MHz clock
   t->TC_RA =  440 ;     // roughly square wave
   t->TC_CMR = (t->TC_CMR & 0xFFF0FFFF) | TC_CMR_ACPA_CLEAR | TC_CMR_ACPC_SET ;  // set clear and set from RA and RC compares
   
@@ -76,7 +76,7 @@ Serial.println("ADC Setup complete.");
 
 // Circular buffer, power of two.
 #define BUFSIZE 0x300
-#define BUFMASK 0X2ff
+#define BUFMASK 0X3ff
 volatile float samplesA [BUFSIZE] ;
 volatile float pastSamplesA[2] = {0,0};
 volatile float samplesB [BUFSIZE] ;
@@ -103,15 +103,11 @@ extern "C"
 void ADC_Handler (void){
   
   if (ADC->ADC_ISR & ADC_ISR_EOC0){   // ensure there was an End-of-Conversion and we read the ISR reg
-  
     int val = *(ADC->ADC_CDR + 0) ;    // get conversion result
     float temp = gain*((3.3*(float)(val-2048)/4096.0) -OFFSET_CHANNEL_A);           // stick in circular buffer
     samplesA [sptrA] = temp;//1*FC[0]*temp + gain*FC[1]*pastSamplesA[0] + gain*FC[2]*pastSamplesA[1]
                         //+ FC[3]*samplesA[sptrA-1] + FC[4]*samplesA[sptrA-2];
     sptrA = (sptrA+1) & BUFMASK ;      // move pointer
-
-
-    //flag = true;
   }
 
 
@@ -186,9 +182,11 @@ void loop(){
     if(calabrate == true){
       cal();
       calabrate = false;
+      Serial.println("test1");
     }
     else{
       flag = false;
+      Serial.println("test");
       for(int i = 0; i < 255; i = i+1){
         sprintf(output,"%d,%.4f,%.4f,%.4f,%.4f\n",i,samplesA[i],samplesB[i],samplesC[i],samplesD[i]);
         Serial.print(output);
