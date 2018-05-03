@@ -1,3 +1,6 @@
+#include <stdio.h>
+#include <math.h>
+
 void setup()
 {
   Serial.begin (115200) ; // was for debugging
@@ -35,8 +38,7 @@ void setup_pio_TIOA0 ()  // Configure Ard pin 2 as output from TC0 channel A (co
 }
 
 
-void dac_setup ()
-{
+void dac_setup (){
   pmc_enable_periph_clk (DACC_INTERFACE_ID) ; // start clocking DAC
   DACC->DACC_CR = DACC_CR_SWRST ;  // reset DAC
 
@@ -50,15 +52,13 @@ void dac_setup ()
   DACC->DACC_CHER = DACC_CHER_CH0 << 0 ; // enable chan0
 }
 
-void dac_write (int val)
-{
+void dac_write (int val){
   DACC->DACC_CDR = val & 0xFFF ;
 }
 
 
 
-void adc_setup ()
-{
+void adc_setup (){
   NVIC_EnableIRQ (ADC_IRQn) ;   // enable ADC interrupt vector
   ADC->ADC_MR = (ADC->ADC_MR) | 0X00800000; // enable different settings for each channel
   ADC->ADC_IDR = 0xFFFFFFFF ;   // disable interrupts
@@ -86,10 +86,14 @@ volatile int sptrA = 0 ;
 volatile int sptrB = 0 ;
 volatile int sptrC = 0 ;
 volatile int sptrD = 0 ;
+volatile float OFFSET_CHANNEL_A = 0;
+volatile float OFFSET_CHANNEL_B = 0;
+volatile float OFFSET_CHANNEL_C= 0;
+volatile float OFFSET_CHANNEL_D = 0;
 volatile int sptrALast = 0x3FF;
 volatile bool flag = false;   
 static float FC[5] = {.2647, .5294, .2647, .1151, -.1739}; // filter coeficcents
-static float gain = 50;
+volatile float gain =1;
 
 #ifdef __cplusplus
 extern "C" 
@@ -101,9 +105,9 @@ void ADC_Handler (void){
   if (ADC->ADC_ISR & ADC_ISR_EOC0){   // ensure there was an End-of-Conversion and we read the ISR reg
   
     int val = *(ADC->ADC_CDR + 0) ;    // get conversion result
-    float temp = 3.3*(float)(val-2048)/4096.0 ;           // stick in circular buffer
-    samplesA [sptrA] = gain*FC[0]*temp + gain*FC[1]*pastSamplesA[0] + gain*FC[2]*pastSamplesA[1]
-                        + FC[3]*samplesA[sptrA-1] + FC[4]*samplesA[sptrA-2];
+    float temp = gain*((3.3*(float)(val-2048)/4096.0) -OFFSET_CHANNEL_A);           // stick in circular buffer
+    samplesA [sptrA] = temp;//1*FC[0]*temp + gain*FC[1]*pastSamplesA[0] + gain*FC[2]*pastSamplesA[1]
+                        //+ FC[3]*samplesA[sptrA-1] + FC[4]*samplesA[sptrA-2];
     sptrA = (sptrA+1) & BUFMASK ;      // move pointer
 
 
@@ -113,21 +117,21 @@ void ADC_Handler (void){
 
   if (ADC->ADC_ISR & ADC_ISR_EOC2){   // ensure there was an End-of-Conversion and we read the ISR reg
     int val = *(ADC->ADC_CDR + 2) ;    // get conversion result
-    samplesB [sptrB] = 3.3*(float)(val-2048)/4096.0 ;           // stick in circular buffer
+    samplesB [sptrB] = gain*((3.3*(float)(val-2048)/4096.0)-OFFSET_CHANNEL_B) ;           // stick in circular buffer
     sptrB = (sptrB+1) & BUFMASK ;      // move pointer 
   }
 
 
   if (ADC->ADC_ISR & ADC_ISR_EOC4) {  // ensure there was an End-of-Conversion and we read the ISR reg
     int val = *(ADC->ADC_CDR+4) ;    // get conversion result
-    samplesC [sptrC] = 3.3*(float)(val-2048)/4096.0 ;           // stick in circular buffer
+    samplesC [sptrC] = gain*((3.3*(float)(val-2048)/4096.0)-OFFSET_CHANNEL_C) ;           // stick in circular buffer
     sptrC = (sptrC+1) & BUFMASK ;      // move pointer
   }
 
 
   if (ADC->ADC_ISR & ADC_ISR_EOC6){   // ensure there was an End-of-Conversion and we read the ISR reg
     int val = *(ADC->ADC_CDR+6) ;    // get conversion result
-    samplesD [sptrD] = 3.3*(float)(val-2048)/4096.0 ;           // stick in circular buffer
+    samplesD [sptrD] = gain*((3.3*(float)(val-2048)/4096.0)-OFFSET_CHANNEL_D) ;           // stick in circular buffer
     sptrD = (sptrD+1) & BUFMASK ;      // move pointer
    // flag = true;
     if( sptrC == 255){
@@ -144,11 +148,31 @@ void ADC_Handler (void){
 }
 #endif
 
+void cal(){
+  float sumA = 0;
+  float sumB = 0;
+  float sumC = 0;
+  float sumD = 0;
+  for(int i = 0; i < 255; i = i+1){
+    sumA += samplesA[i];
+    sumB += samplesB[i];
+    sumC += samplesC[i];
+    sumD += samplesD[i];
+  }
+  OFFSET_CHANNEL_A = sumA/255.0;
+  OFFSET_CHANNEL_B = sumB/255.0;
+  OFFSET_CHANNEL_C = sumC/255.0;
+  OFFSET_CHANNEL_D = sumD/255.0;
+  gain = 500; // CHANGE THE GAIN HERE
+}// end funcion cal
+
 const int windowSize = 0x1F40;
 uint16_t temp[4][windowSize];
 int currentIndex = 0;
 int printingFlag = false;
 char output[64];
+bool calabrate = true;
+
 void loop(){
 
 //when flag window treue
@@ -157,16 +181,25 @@ void loop(){
 //   calc distance
 //   display
 // 
-
+  
   if( flag == true ){
-    flag = false;
-    for(int i = 0; i < 255; i = i+1){
-      //Serial.print(i);Serial.print(',');
-      Serial.print(samplesA[i]);//Serial.print(',');
-      Serial.print(',');Serial.print(samplesB[i]);
-      Serial.print(',');Serial.print(samplesC[i]);
-      Serial.print(',');Serial.println(samplesD[i]);
+    if(calabrate == true){
+      cal();
+      calabrate = false;
     }
+    else{
+      flag = false;
+      for(int i = 0; i < 255; i = i+1){
+        sprintf(output,"%d,%.4f,%.4f,%.4f,%.4f\n",i,samplesA[i],samplesB[i],samplesC[i],samplesD[i]);
+        Serial.print(output);
+        //Serial.print(i);Serial.print(',');
+       // Serial.print(samplesA[i]);//Serial.print(',');
+       // Serial.print(',');Serial.print(samplesB[i]);
+       // Serial.print(',');Serial.print(samplesC[i]);
+       // Serial.print(',');Serial.println(samplesD[i]);
+      }
+    }
+    sptrA = sptrB = sptrC = sptrD =0;
     ADC->ADC_IER = 0x55 ;         // enable End-Of-Conv interrupt 
   }
 
