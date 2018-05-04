@@ -91,7 +91,12 @@ volatile float OFFSET_CHANNEL_B = 0;
 volatile float OFFSET_CHANNEL_C= 0;
 volatile float OFFSET_CHANNEL_D = 0;
 volatile int sptrALast = 0x3FF;
-volatile bool flag = false;   
+volatile bool flag = false;  
+volatile bool CHANNEL_A_FLAG = false;
+volatile bool CHANNEL_B_FLAG = false;
+volatile bool CHANNEL_C_FLAG = false;
+volatile bool CHANNEL_D_FLAG = false;
+ 
 static float FC[5] = {.2647, .5294, .2647, .1151, -.1739}; // filter coeficcents
 volatile float gain =1;
 
@@ -105,9 +110,10 @@ void ADC_Handler (void){
   if (ADC->ADC_ISR & ADC_ISR_EOC0){   // ensure there was an End-of-Conversion and we read the ISR reg
     int val = *(ADC->ADC_CDR + 0) ;    // get conversion result
     float temp = gain*((3.3*(float)(val-2048)/4096.0) -OFFSET_CHANNEL_A);           // stick in circular buffer
-    samplesA [sptrA] = temp;//1*FC[0]*temp + gain*FC[1]*pastSamplesA[0] + gain*FC[2]*pastSamplesA[1]
-                        //+ FC[3]*samplesA[sptrA-1] + FC[4]*samplesA[sptrA-2];
+    samplesA [sptrA] = temp;//1*FC[0]*temp + 1*FC[1]*pastSamplesA[0] + 1*FC[2]*pastSamplesA[1]
+                       // + FC[3]*samplesA[sptrA-1] + FC[4]*samplesA[sptrA-2];
     sptrA = (sptrA+1) & BUFMASK ;      // move pointer
+    CHANNEL_A_FLAG = true;
   }
 
 
@@ -115,6 +121,7 @@ void ADC_Handler (void){
     int val = *(ADC->ADC_CDR + 2) ;    // get conversion result
     samplesB [sptrB] = gain*((3.3*(float)(val-2048)/4096.0)-OFFSET_CHANNEL_B) ;           // stick in circular buffer
     sptrB = (sptrB+1) & BUFMASK ;      // move pointer 
+    CHANNEL_B_FLAG = true;
   }
 
 
@@ -122,6 +129,7 @@ void ADC_Handler (void){
     int val = *(ADC->ADC_CDR+4) ;    // get conversion result
     samplesC [sptrC] = gain*((3.3*(float)(val-2048)/4096.0)-OFFSET_CHANNEL_C) ;           // stick in circular buffer
     sptrC = (sptrC+1) & BUFMASK ;      // move pointer
+    CHANNEL_C_FLAG = true;
   }
 
 
@@ -129,8 +137,8 @@ void ADC_Handler (void){
     int val = *(ADC->ADC_CDR+6) ;    // get conversion result
     samplesD [sptrD] = gain*((3.3*(float)(val-2048)/4096.0)-OFFSET_CHANNEL_D) ;           // stick in circular buffer
     sptrD = (sptrD+1) & BUFMASK ;      // move pointer
-   // flag = true;
-    if( sptrC == 255){
+    CHANNEL_D_FLAG = true;
+    if( sptrC == 768){
       flag = true;
       ADC->ADC_IDR = 0xFFFFFFFF ;   // disable interrupts
     }
@@ -138,6 +146,7 @@ void ADC_Handler (void){
 
 
   }// end of ADC_Handler - adc inturupt 
+
 
 
 #ifdef __cplusplus 
@@ -149,16 +158,22 @@ void cal(){
   float sumB = 0;
   float sumC = 0;
   float sumD = 0;
-  for(int i = 0; i < 255; i = i+1){
+  for(int i = 0; i < 768; i = i+1){
     sumA += samplesA[i];
     sumB += samplesB[i];
     sumC += samplesC[i];
     sumD += samplesD[i];
   }
-  OFFSET_CHANNEL_A = sumA/255.0;
-  OFFSET_CHANNEL_B = sumB/255.0;
-  OFFSET_CHANNEL_C = sumC/255.0;
-  OFFSET_CHANNEL_D = sumD/255.0;
+  OFFSET_CHANNEL_A = sumA/767.0;
+  OFFSET_CHANNEL_B = sumB/767.0;
+  OFFSET_CHANNEL_C = sumC/767.0;
+  OFFSET_CHANNEL_D = sumD/767.0;
+  Serial.println("Channel off sets");
+  Serial.print(OFFSET_CHANNEL_A);Serial.print(',');
+  Serial.print(OFFSET_CHANNEL_B);Serial.print(',');
+  Serial.print(OFFSET_CHANNEL_C);Serial.print(',');
+  Serial.println(OFFSET_CHANNEL_D);
+  delay(1000);
   gain = 500; // CHANGE THE GAIN HERE
 }// end funcion cal
 
@@ -168,37 +183,34 @@ int currentIndex = 0;
 int printingFlag = false;
 char output[64];
 bool calabrate = true;
-
+int incomingByte = 0;
 void loop(){
 
-//when flag window treue
-//   calc crosscorr
-//   calc angle
-//   calc distance
-//   display
-// 
+  if(Serial.available() > 0)
+  {
+    incomingByte = Serial.parseInt();
+    if( incomingByte == 1){
+        sptrA = sptrB = sptrC = sptrD =0;
+        ADC->ADC_IER = 0x55 ;         // enable End-Of-Conv interrupt 
+    }
+  }
   
   if( flag == true ){
     if(calabrate == true){
       cal();
       calabrate = false;
       Serial.println("test1");
+     }
+     else{
+        flag = false;
+        //Serial.println("test");
+        for(int i = 0; i < 768; i = i+1){
+          sprintf(output,"%.4f,%.4f,%.4f,%.4f\n",samplesA[i],samplesB[i],samplesC[i],samplesD[i]);
+          Serial.print(output);
+        }
     }
-    else{
-      flag = false;
-      Serial.println("test");
-      for(int i = 0; i < 255; i = i+1){
-        sprintf(output,"%d,%.4f,%.4f,%.4f,%.4f\n",i,samplesA[i],samplesB[i],samplesC[i],samplesD[i]);
-        Serial.print(output);
-        //Serial.print(i);Serial.print(',');
-       // Serial.print(samplesA[i]);//Serial.print(',');
-       // Serial.print(',');Serial.print(samplesB[i]);
-       // Serial.print(',');Serial.print(samplesC[i]);
-       // Serial.print(',');Serial.println(samplesD[i]);
-      }
-    }
-    sptrA = sptrB = sptrC = sptrD =0;
-    ADC->ADC_IER = 0x55 ;         // enable End-Of-Conv interrupt 
+    //sptrA = sptrB = sptrC = sptrD =0;
+    //ADC->ADC_IER = 0x55 ;         // enable End-Of-Conv interrupt 
   }
 
 }

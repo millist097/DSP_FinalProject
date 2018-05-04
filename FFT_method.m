@@ -1,9 +1,9 @@
 fs = 16000;
 T = 1/fs;
 
-M = csvread('singleWindowData_45d_50khzFs.csv');
-
-stem(M(:,1))
+M = csvread('dataTest.csv');
+figure(3)
+stem(M(:,2))
 M(:,1) = M(:,1)/max(M(:,1));
 M(:,2) = M(:,2)/max(M(:,2));
 M(:,3) = M(:,3)/max(M(:,3));
@@ -21,10 +21,10 @@ phaseDiff_A_D = phase(channelA_FFT)-phase(channelD_FFT);
 
 figure(1)
 subplot(2,1,2)
-stem(phase(channelC_FFT))
+stem(phase(channelA_FFT))
 ylabel('phase')
 subplot(2,1,1)
-stem(abs(channelC_FFT))
+stem(abs(channelA_FFT))
 ylabel('mag')
 
 figure(2)
@@ -34,3 +34,11 @@ ylabel('phase')
 subplot(2,1,1)
 stem(abs(channelB_FFT))
 ylabel('mag')
+
+
+timeDelay = 343.*phaseDiff_A_B(30:40).*T./(2*pi)
+
+angles =  abs(acos(timeDelay/.045))*180/pi
+
+
+L = (timeDelay.^2 - timeDelay + .045^2)./(timeDelay.*(-1))
