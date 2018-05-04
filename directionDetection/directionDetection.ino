@@ -192,6 +192,7 @@ void loop(){
     if( incomingByte == 1){
         sptrA = sptrB = sptrC = sptrD =0;
         ADC->ADC_IER = 0x55 ;         // enable End-Of-Conv interrupt 
+       // delay(100);
     }
   }
   
@@ -209,8 +210,8 @@ void loop(){
           Serial.print(output);
         }
     }
-    //sptrA = sptrB = sptrC = sptrD =0;
-    //ADC->ADC_IER = 0x55 ;         // enable End-Of-Conv interrupt 
+    sptrA = sptrB = sptrC = sptrD =0;
+   // ADC->ADC_IER = 0x55 ;         // enable End-Of-Conv interrupt 
   }
 
 }

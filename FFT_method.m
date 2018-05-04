@@ -1,9 +1,9 @@
 fs = 16000;
 T = 1/fs;
 
-M = csvread('dataTest.csv');
+M = csvread('dataTest2.csv');
 figure(3)
-stem(M(:,2))
+stem(M(:,4))
 M(:,1) = M(:,1)/max(M(:,1));
 M(:,2) = M(:,2)/max(M(:,2));
 M(:,3) = M(:,3)/max(M(:,3));
@@ -36,9 +36,13 @@ stem(abs(channelB_FFT))
 ylabel('mag')
 
 
-timeDelay = 343.*phaseDiff_A_B(30:40).*T./(2*pi)
+delta_L = 343.*phaseDiff_A_B(30:40).*T./(2*pi)
 
-angles =  abs(acos(timeDelay/.045))*180/pi
+angles =  abs(acos(delta_L/.0457))*180/pi
 
 
-L = (timeDelay.^2 - timeDelay + .045^2)./(timeDelay.*(-1))
+L = (delta_L.^2 - delta_L* + .0457^2)./(delta_L.*(-1))
+
+L2 = (.0457^2)./delta_L
+
+
