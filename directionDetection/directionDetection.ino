@@ -20,7 +20,7 @@ void setup()
               TC_CMR_ACPA_CLEAR | TC_CMR_ACPC_CLEAR |
               TC_CMR_BCPB_CLEAR | TC_CMR_BCPC_CLEAR ;
   
-  t->TC_RC =  2625;     // counter resets on RC, so sets period in terms of 42MHz clock
+  t->TC_RC =  1000;     // counter resets on RC, so sets period in terms of 42MHz clock
   t->TC_RA =  440 ;     // roughly square wave
   t->TC_CMR = (t->TC_CMR & 0xFFF0FFFF) | TC_CMR_ACPA_CLEAR | TC_CMR_ACPC_SET ;  // set clear and set from RA and RC compares
   
@@ -75,8 +75,8 @@ Serial.println("ADC Setup complete.");
 }
 
 // Circular buffer, power of two.
-#define BUFSIZE 0x300
-#define BUFMASK 0X3ff
+#define BUFSIZE 2047
+#define BUFMASK 0X7FF
 volatile float samplesA [BUFSIZE] ;
 volatile float pastSamplesA[2] = {0,0};
 volatile float samplesB [BUFSIZE] ;
@@ -138,7 +138,7 @@ void ADC_Handler (void){
     samplesD [sptrD] = gain*((3.3*(float)(val-2048)/4096.0)-OFFSET_CHANNEL_D) ;           // stick in circular buffer
     sptrD = (sptrD+1) & BUFMASK ;      // move pointer
     CHANNEL_D_FLAG = true;
-    if( sptrC == 768){
+    if( sptrD == BUFSIZE){
       flag = true;
       ADC->ADC_IDR = 0xFFFFFFFF ;   // disable interrupts
     }
@@ -158,16 +158,16 @@ void cal(){
   float sumB = 0;
   float sumC = 0;
   float sumD = 0;
-  for(int i = 0; i < 768; i = i+1){
+  for(int i = 0; i < BUFSIZE; i = i+1){
     sumA += samplesA[i];
     sumB += samplesB[i];
     sumC += samplesC[i];
     sumD += samplesD[i];
   }
-  OFFSET_CHANNEL_A = sumA/767.0;
-  OFFSET_CHANNEL_B = sumB/767.0;
-  OFFSET_CHANNEL_C = sumC/767.0;
-  OFFSET_CHANNEL_D = sumD/767.0;
+  OFFSET_CHANNEL_A = sumA/(float)BUFSIZE;
+  OFFSET_CHANNEL_B = sumB/(float)BUFSIZE;
+  OFFSET_CHANNEL_C = sumC/(float)BUFSIZE;
+  OFFSET_CHANNEL_D = sumD/(float)BUFSIZE;
   Serial.println("Channel off sets");
   Serial.print(OFFSET_CHANNEL_A);Serial.print(',');
   Serial.print(OFFSET_CHANNEL_B);Serial.print(',');
@@ -184,6 +184,9 @@ int printingFlag = false;
 char output[64];
 bool calabrate = true;
 int incomingByte = 0;
+
+
+
 void loop(){
 
   if(Serial.available() > 0)
@@ -205,7 +208,7 @@ void loop(){
      else{
         flag = false;
         //Serial.println("test");
-        for(int i = 0; i < 768; i = i+1){
+        for(int i = 0; i < BUFSIZE; i = i+1){
           sprintf(output,"%.4f,%.4f,%.4f,%.4f\n",samplesA[i],samplesB[i],samplesC[i],samplesD[i]);
           Serial.print(output);
         }
