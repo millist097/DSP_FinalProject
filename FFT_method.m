@@ -1,5 +1,9 @@
 fs = 42000;
 T = 1/fs;
+N =2047
+
+
+
 
 M = csvread('dataTestLong.csv');
 figure(3)
@@ -21,9 +25,9 @@ channelD_FFT = fft(M(:,4));
 
 
 stem(M(:,4))
-phaseDiff_A_B = -1.*(-phase(channelA_FFT)+phase(channelB_FFT));
-phaseDiff_A_C = -1.*(-phase(channelA_FFT)+phase(channelC_FFT));
-phaseDiff_A_D = -1.*(-phase(channelA_FFT)+phase(channelD_FFT));
+phaseDiff_A_B = -1.*(-phase(channelA_FFT) + phase(channelB_FFT));
+phaseDiff_A_C = -1.*(-phase(channelA_FFT) + phase(channelC_FFT));
+phaseDiff_A_D = -1.*(-phase(channelA_FFT) + phase(channelD_FFT));
 
 figure(1)
 subplot(2,1,2)
@@ -42,11 +46,16 @@ stem(abs(channelB_FFT(2:end)))
 ylabel('mag')
 d =.0475;
 
-delta_L_AD = 343.*phaseDiff_A_D(45:65).*T./(2*pi);
-delta_L_AC = 343.*phaseDiff_A_C(45:65).*T./(2*pi);
-delta_L_AB = 343.*phaseDiff_A_B(45:65).*T./(2*pi);
+temp = (fs/(N)).*([1:N]-1)';
+lambda = (343)./(temp);
 
-angles_AD =  acos(delta_L_AD/(d*3));%*180/pi;
+
+r = [72 115 88 47 ];
+delta_L_AD = phaseDiff_A_D(110:130).*lambda(40:60)./(110:130);
+delta_L_AC = phaseDiff_A_C(110:130).*lambda(40:60)./(110:130);
+delta_L_AB = phaseDiff_A_B(110:130).*lambda(40:60)./(110:130);
+
+angles_AD =  abs(acos(delta_L_AD/(d*3)));%*180/pi;
 a_AD = mean(angles_AD)*180/pi
 angles_AC =  acos(delta_L_AC/(d*2));%*180/pi;
 a_AC = mean(angles_AC)*180/pi
@@ -60,17 +69,13 @@ d =.0475;
 
 L3_AD = (delta_L_AD.^2 + (3*d)^2 - delta_L_AD.*(3*d).*cos(angles_AD));
 L3_AD = L3_AD./((3*d).*cos(angles_AD)-2.*delta_L_AD);
-mean(L3_AD)
+L3_AD=mean(L3_AD)
 L3_AC = (delta_L_AC.^2 + (2*d)^2 - delta_L_AC.*(2*d).*cos(angles_AC));
 L3_AC = L3_AC./((2*d).*cos(angles_AC)-2.*delta_L_AC);
-mean(L3_AC)
+L3_AC=mean(L3_AC)
 L3_AB = (delta_L_AB.^2 + d^2 - delta_L_AB.*d.*cos(angles_AB));
 L3_AB = L3_AB./(d.*cos(angles_AB)-2.*delta_L_AB);
-mean(L3_AB)
-
-
-
-
+L3_AB=mean(L3_AB)
 
 FinAngleSource = mean((180 - (180 - angles_AC*180/pi)- angles_AD*180/pi));
 FinAngleCh4 = mean((180 - angles_AC*180/pi));
