@@ -174,7 +174,7 @@ void cal(){
   Serial.print(OFFSET_CHANNEL_C);Serial.print(',');
   Serial.println(OFFSET_CHANNEL_D);
   delay(1000);
-  gain = 500; // CHANGE THE GAIN HERE
+  gain = 600; // CHANGE THE GAIN HERE
 }// end funcion cal
 
 const int windowSize = 0x1F40;
@@ -214,7 +214,7 @@ void loop(){
         }
     }
     sptrA = sptrB = sptrC = sptrD =0;
-   // ADC->ADC_IER = 0x55 ;         // enable End-Of-Conv interrupt 
+    //ADC->ADC_IER = 0x55 ;         // enable End-Of-Conv interrupt 
   }
 
 }
