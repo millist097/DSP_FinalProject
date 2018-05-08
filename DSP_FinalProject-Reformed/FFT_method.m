@@ -42,14 +42,42 @@ stem(abs(channelB_FFT))
 ylabel('mag')
 
 
-delta_L = 343.*phaseDiff_A_B(35:45).*T./(2*pi)
 
+
+
+
+
+
+delta_L = abs(343.*phaseDiff_A_B(35:45).*T./(2*pi))
 angles =  acos(delta_L/.0457);%*180/pi;
 angles*180/pi
 d =.0475;
-%L = (delta_L.^2 - delta_L* + .0457^2)./(delta_L.*(-1))
 
-%L2 = (.0457^2)./delta_L
+delta_L2 = abs(343.*phaseDiff_A_C(35:45).*T./(2*pi))
+angles2 =  acos(delta_L2/(.0457*2));%*180/pi;
+angles2*180/pi
 
-L3 = (delta_L.^2 + d^2 - delta_L.*d.*cos(angles));
-L3 = L3./(d.*cos(angles)-2.*delta_L)
+delta_L3 = abs(343.*phaseDiff_A_D(35:45).*T./(2*pi))
+angles3 =  acos(delta_L3/(.0457*3));%*180/pi;
+angles3*180/pi
+
+
+ReferenceChannelFourBearing = mean(angles3*180/pi)
+
+L  = (delta_L.^2 - delta_L* + .0457^2)./(delta_L.*(-1))
+L2 = (delta_L.^2 - delta_L* + .0457^2)./(delta_L.*(-1))
+L3 = (delta_L.^2 - delta_L* + .0457^2)./(delta_L.*(-1))
+
+FinAngleInner = mean((180 - (180 - angles*180/pi)- angles3*180/pi))
+FinAngleOuter = mean((angles3*180/pi))
+
+Distance = sind(FinAngleOuter)*2*.0457/sind(FinAngleInner)
+
+
+
+  %%L = (delta_L.^2 - delta_L* + .0457^2)./(delta_L.*(-1))
+
+  %%L2 = (.0457^2)./delta_L
+
+% L3 = (delta_L.^2 + d^2 - delta_L.*d.*cos(angles));
+% L3 = L3./(d.*cos(angles)-2.*delta_L)
