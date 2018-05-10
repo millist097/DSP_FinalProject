@@ -208,13 +208,13 @@ void loop(){
      else{
         flag = false;
         //Serial.println("test");
-        for(int i = 0; i < BUFSIZE; i = i+1){
+        for(int i = 0; i < BUFSIZE/2; i = i+1){
           sprintf(output,"%.4f,%.4f,%.4f,%.4f\n",samplesA[i],samplesB[i],samplesC[i],samplesD[i]);
           Serial.print(output);
         }
     }
     sptrA = sptrB = sptrC = sptrD =0;
-    ADC->ADC_IER = 0x55 ;         // enable End-Of-Conv interrupt 
+    //ADC->ADC_IER = 0x55 ;         // enable End-Of-Conv interrupt 
   }
 
 }
