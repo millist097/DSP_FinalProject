@@ -6,10 +6,10 @@ d=3*.0475;
 clear M
 
 % M = csvread('DataSets/459Hz_90d_70cm.csv');
- M = csvread('DataSets/459Hz_80d_70cm.csv');
+% M = csvread('DataSets/459Hz_80d_70cm.csv');
 % M = csvread('DataSets/459Hz_70d_70cm.csv');
 % M = csvread('DataSets/459Hz_60d_70cm.csv');
-% M = csvread('DataSets/459Hz_50d_70cm.csv');
+ M = csvread('DataSets/459Hz_50d_70cm.csv');
 % M = csvread('DataSets/dataTestLong.csv');
 figure(1)
 stem(M(2:end,4))
@@ -35,7 +35,7 @@ for i = [0:4]
    % corrAD= xcorr(M(1+(b*i):b*(i+1),1),M(1+(b*i):b*(i+1),4));
 corrAD= xcorr((M(:,1)));
 corrAD(N) = corrAD(N)/9;
-    [a4,k] = max(corrAD);
+    [a4,k] = max(abs(corrAD));
     figure(3);
     stem(corrAD);
     title('corralation')
@@ -61,8 +61,8 @@ mag4 = abs(aoeu4);
 mag1 = abs(aoeu1);
 [a4,b4]=max(mag4  );
 [a1,b1] = max( mag1);
-mag4 = mag4.*.25;
-mag1 = mag1.*.25;
+mag4 = mag4.*.01;
+mag1 = mag1.*.01;
 mag4(b4)=a4;
 mag4(1)=0;
 mag1(b1)=a1;
@@ -71,25 +71,20 @@ clean4 = real(ifft(mag4.*exp(j*(phase(aoeu4)))));
 clean1 = real(ifft(mag1.*exp(j*(phase(aoeu1)))));
 figure(5)
 subplot(2,1,1)
-stem(clean1./max(clean1))
-xlabel('Clean Signal Channel 1 [n]')
-title('Signals after Noise Removal')
-axis([0 100 -1 1])
+stem(clean1)
+title('Clean Signal Channel 1')
+xaxis('Sample')
+yaxis
 subplot(2,1,2)
-stem(clean4./max(clean4))
-xlabel('Clean Signal Channel 2 [n]')
-axis([0 100 -1 1])
-
+stem(clean4)
 
 corrAD = xcorr(clean1(100:300)./max(clean1),clean4(100:300)./max(clean4));
 N=200;
 d=3*.0475;
 figure(6)
 stem(corrAD)
-title('Cross Correlation of Channel 1 and Channel 2')
-xlabel('Index')
 [a4,k] = max(corrAD);
-    
+    title('corralation')
     temp = acos(abs(-N+k)*343/(fs*d))*180/pi
 % 
 % delay  =((-800+k)*343/fs);
