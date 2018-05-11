@@ -23,12 +23,10 @@ subplot(2,1,1)
 plot(shortL_clap)
 xlabel('Channel 1 [n]')
 title('Recording of a Clap')
-grid on
 axis([0 2000 -1 1])
 subplot(2,1,2)
 plot(shortR_clap)
 xlabel('Channel 2 [n]')
-grid on
 
 axis([0 2000 -1 1])
 
@@ -42,8 +40,6 @@ for i =1:4
                    shortR_clap((i-1)*k+1:i*k));
     plot(corrLR)
     title('Cross Correlation of Clap')
-    xlabel('Samples xCorr center at n = 500')
-    grid on
     %pause
     [a,n(i)]=max(corrLR);
     n(i) = n(i)-k;
